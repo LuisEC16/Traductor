@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINGUABOT</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/logo.ico">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.0/lottie.min.js"></script>
+</head>
+<body>
+    <img src="/static/logo.png" alt="Logo" style="width: 600px; height: auto;">
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+
+    <form id="formTraduccion" action="/traducir" method="post">
+        <label for="texto" style="font-size: 20px;">Introduce el texto:</label><br>
+        <input type="text" id="texto" name="texto" placeholder="Introduce el texto...">
+        <button type="button" id="botonMicrofono">
+            <img src="/static/microfono.png" alt="Micrófono" style="width: 50px; height: 50px;">
+        </button><br>
+        
+        <label for="idioma_destino" style="font-size: 20px;">Idioma de destino:</label><br>
+        <select id="idioma_destino" name="idioma_destino">
+            {% for idioma in idiomas %}
+                <option value="{{ idioma }}">{{ nombres_idiomas[idioma] }}</option>
+            {% endfor %}
+        </select><br>
+        
+        <input type="submit" value="Traducir">
+    </form>
+    
+    
+    <script>
+        const botonMicrofono = document.getElementById('botonMicrofono');
+        const campoTexto = document.getElementById('texto');
+    
+        // Función para manejar el evento de clic en el botón de micrófono
+        botonMicrofono.addEventListener('click', function() {
+            // Comprobamos si el navegador es compatible con la API de reconocimiento de voz
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.lang = 'es-ES'; // Establecemos el idioma del reconocimiento de voz
+                recognition.continuous = false; // Detenemos el reconocimiento después de una pausa
+                
+                // Función que se ejecuta cuando se detecta un resultado
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript; // Obtenemos el texto reconocido
+                    campoTexto.value = transcript; // Escribimos el texto en el campo de texto
+                };
+    
+                // Función que se ejecuta cuando se inicia el reconocimiento de voz
+                recognition.onstart = function() {
+                    console.log('Reconocimiento de voz iniciado');
+                };
+    
+                // Función que se ejecuta cuando se detiene el reconocimiento de voz
+                recognition.onend = function() {
+                    console.log('Reconocimiento de voz detenido');
+                };
+    
+                // Iniciamos el reconocimiento de voz
+                recognition.start();
+            } else {
+                alert('Tu navegador no es compatible con la API de reconocimiento de voz.');
+            }
+        });
+
+        function reproducirTexto(idioma) {
+            const textoTraducidoElemento = document.getElementById('traduccion');
+            const textoTraducido = textoTraducidoElemento.innerText;
+
+            // Obtener el texto sin la palabra "Traducción:"
+            const textoSinEncabezado = textoTraducido.replace("Traducción:", "").trim();
+
+            // Crear el objeto SpeechSynthesisUtterance
+            const synthesis = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(textoSinEncabezado);
+            
+            // Establecer el idioma de destino como el idioma seleccionado por el usuario
+            // Usamos un formato más detallado para especificar el idioma
+            utterance.lang = 'es-' + idioma;
+
+            // Reproducir el texto en el idioma seleccionado por el usuario
+            synthesis.speak(utterance);
+        }
+
+
+
+
+    </script>
+
+    <!-- El resultado de la traducción se mostrará aquí -->
+    <div id="traduccion" lang="{{ idioma_traduccion }}">
+        {% if traduccion %}
+            <h2>Traducción:</h2>
+            <p>{{ traduccion }}</p>
+        {% endif %}
+    </div>
+    
+    <!-- Imágenes PNG -->
+    <button id="botonBocina" onclick="reproducirTexto('{{ idioma_destino }}')">
+        <img src="/static/bocina.png" alt="bocina">
+    </button>
+    
+
+</body>
+</html>
